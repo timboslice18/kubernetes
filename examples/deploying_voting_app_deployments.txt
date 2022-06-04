@@ -1,0 +1,188 @@
+Directory Structure:
+/voting-app
+	voting-app-deploy.yml
+	redis-deploy.yml
+	postgres-deploy.yml
+	worker-app-deploy.yml
+	result-app-deploy.yml
+	voting-app-pod.yml
+	result-app-pod.yml
+	redis-pod.yml
+	postgres-pod.yml
+	worker-app-pod.yml
+	redis-service.yml
+	postgres-service.yml
+	voting-app-service.yml
+	result-app-service.yml
+
+voting-app-deploy.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: voting-app-deploy
+	labels:
+		name: voting-app-deploy
+		app: demo-voting-app
+spec:
+	replicas: 1
+	selector:
+		matchLabels:
+			name: voting-app-pod
+			app: demo-voting-app
+	template:
+		metedata:
+			name: voting-app-pod
+			labels:
+				name: voting-app-pod
+				app: demo-voting-app
+		spec:
+			container:
+				name: voting-app
+				image: kodekloud/examplevotingapp_vote:v1
+				ports:
+					containerPort: 80
+					
+redis-deploy.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: redis-deploy
+	labels:
+		name: redis-deploy
+		app: demo-voting-app
+spec:
+	replicas: 1
+	selector:
+		matchLabels:
+			name: redis-pod
+			app: demo-voting-app
+	template:
+		metedata:
+			name: redis-pod
+			labels:
+				name: redis-pod
+				app: demo-voting-app
+		spec:
+			container:
+				name: redis
+				image: redis
+				ports:
+					containerPort: 6379
+
+postgres-deploy.yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: postgres-pod
+	labels:
+		name: postgres-pod
+		app: demo-voting-app
+spec:
+	replicas: 1
+	selector:
+		matchLabels:
+			name: postgres-pod
+			app: demo-voting-app
+	template:
+		metedata:
+			name: postgres-pod
+			labels:
+				name: redis-pod
+				app: demo-voting-app
+		spec:
+			containers:
+				- name: postgres
+				image: postgres
+				ports:
+					- containerPort: 5432
+				env:
+					- name: POSTGRES_USER
+					value: "postgres"
+					- name: POSTGRES_PASSWORD
+					value: "postgres"
+
+worker-app-deploy.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+	name: worker-app-deploy
+	labels:
+		name: worker-app-deploy
+		app: demo-voting-app
+spec:
+	replicas: 1
+	selector:
+		matchLabels:
+			name: worker-app-deploy
+			app: demo-voting-app
+	template:
+		metedata:
+			name: postgres-pod
+			labels:
+				name: redis-pod
+				app: demo-voting-app
+			spec:
+				containers:
+					- name: worker-app
+					image: kodekloud/examplevotingapp_worker:v1
+
+
+
+result-app-deploy.yml
+apiVersion: v1
+kind: Pod
+metedata:
+	name: result-app-deploy
+	labels:
+		name: result-app-deploy
+		app: demo-voting-app
+spec:
+	replicas: 1
+	selector:
+		matchLabels:
+			name: result-app-pod
+			app: demo-voting-app
+	template:
+		metadata:
+			name: result-app-pod
+			labels:
+				name: result-app-pod
+				app: demo-voting-app
+		spec:
+			container:
+				- name: result-app
+				image: kodekloud/examplevotingapp_result:v1
+				ports:
+					- containerPort: 80
+
+
+
+To deploy:
+
+kubectl create -f voting-app-deploy.yml
+kubectl create -f voting-app-service.yml
+kubectl create -f redis-deploy.yml
+kubectl create -f redis-service.yml
+kubectl create -f postgres-deploy.yml
+kubectl create -f postgres-service.yml
+
+
+kubectl get deployments
+
+
+kubectl get pods,svc
+
+kubectl create -f worker-app-deploy.yml
+
+kubectl create -f result-app-deploy.yml
+kubectl create -f result-service.yml
+
+minikube service voting-service --url http://192.168.99.101:30004
+minikube service results-service --url http://192.168.99.101:30005
+
+kubectl scale deployment voting-app-deploy --replicas=3
+
+kubectl get deployments voting-app-deploy
+
+

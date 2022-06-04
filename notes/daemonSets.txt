@@ -1,0 +1,27 @@
+DaemonSet ensures that one copy of the POD is always present in all members of a cluster
+
+Use Case
+	Monitoring Solution
+	Logs Viewer
+	
+	
+pod-definition.yml
+apiVersion: v1
+kind: DaemonSet
+metedata:
+	name: monitoring-daemon
+spec:
+	selector:
+		matchLabels:
+			app: monitoring-agent
+	template:
+		metadata:
+			labels:
+				app: monitoring-agent
+		spec:
+			containers:
+				- name: monitoring-agent
+				image: monitoring-agent
+				
+kubectl create -f daemon-set-definiton.yml
+

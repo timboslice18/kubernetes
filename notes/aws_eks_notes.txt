@@ -1,0 +1,243 @@
+EKS Installation Procedure
+	https://github.com/yankils/Simple-DevOps-Project/blob/master/Kubernetes/kubernetes_setup_using_eksctl.md
+
+
+	https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html
+	
+	1. Setup kubectl
+	
+	a. Download kubectl version 1.21
+	b. Grant execution permissions to kubectl executable
+	c. Move kubectl onto /usr/local/bin
+	d. Test that your kubectl installation was successful
+	
+	curl -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
+chmod +x ./kubectl
+mv ./kubectl /usr/local/bin 
+kubectl version --short --client
+	
+	2. Setup eksctl
+	
+	a. Download and extract the latest release
+	b. Move the extracted binary to /usr/local/bin
+	c. Test that your eksclt installation was successful
+	
+	curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz"|tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+eksctl version
+	
+	
+	3. Create an IAM Role and attache it to EC2 instance
+		Roles > Create Role > name: eksctl_role > Give access to list below
+		EC2 Instance > Actions > Security > Modify IAM Role
+		
+		IAM user should have access to
+			IAMfull
+			EC2full
+			CloudFormation
+		
+	4. Create your cluster and nodes
+	
+	eksctl create cluster --name cluster-name  \
+--region region-name \
+--node-type instance-type \
+--nodes-min 2 \
+--nodes-max 2 \ --zones <AZ-1>,<AZ-2>
+	
+	Example:
+	eksctl create cluster --name timbosclice  \
+	--region us-east-1 \
+	--node-type t2.small \
+
+	After running the command, it will take about 25 minutes. You can watch the progress in the cloudformation page in AWS console.
+	
+	
+	
+	1. To delete the EKS clsuter
+	
+	eksctl delete cluster valaxy --region ap-south-1
+	
+	2. Validate your cluster using by creating by checking nodes and by creating a pod
+	
+	kubectl get nodes
+kubectl run tomcat --image=tomcat 
+	
+	Deploying Nginx pods on Kubernetes
+	
+	3. Deploying Nginx Container
+	
+	kubectl create deployment  demo-nginx --image=nginx --replicas=2 --port=80
+#kubectl deployment regapp --image=valaxy/regapp --replicas=2 --port=8080
+	kubectl get all
+kubectl get pod
+	
+	4. Expose the deployment as service. This will create an ELB in front of those 2 containers and allow us to publicly access them.
+	
+	kubectl expose deployment demo-nginx --port=80 --type=LoadBalancer
+#kubectl expose deployment regapp --port=8080 --type=LoadBalancer
+	kubectl get services -o wide
+	
+	You can view the load balancer after this step by going to the load balancer section in aws console. Use the external-ip field from the output of the kubectl get services -o wide command to view page in broswer
+
+Setup botstrap server for eksctl
+
+
+
+
+Setup Kubernetes using eksctl
+
+
+
+
+Run Kubernetes basic commands
+
+[root@ip-172-31-23-233 tmp]# kubectl create deployment  demo-nginx --image=nginx --replicas=2 --port=80
+deployment.apps/demo-nginx created
+[root@ip-172-31-23-233 tmp]# kubectl get deployments
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+demo-nginx   2/2     2            2           11s
+[root@ip-172-31-23-233 tmp]# kubectl get deploy
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+demo-nginx   2/2     2            2           27s
+[root@ip-172-31-23-233 tmp]# kubectl get replicaset
+NAME                    DESIRED   CURRENT   READY   AGE
+demo-nginx-848d469579   2         2         2       32s
+[root@ip-172-31-23-233 tmp]# kubectl get pod
+NAME                          READY   STATUS    RESTARTS   AGE
+demo-nginx-848d469579-wbhsh   1/1     Running   0          41s
+demo-nginx-848d469579-xlqb8   1/1     Running   0          42s
+webapp                        1/1     Running   0          9m26s
+[root@ip-172-31-23-233 tmp]# kubectl expose deployment demo-nginx --port=80 --type=LoadBalancer
+service/demo-nginx exposed
+[root@ip-172-31-23-233 tmp]# kubectl get services -o wide
+NAME         TYPE           CLUSTER-IP      EXTERNAL-IP                                                             PORT(S)        AGE   SELECTOR
+demo-nginx   LoadBalancer   10.100.63.183   a736f67e477e34c5d84f46ff87da8221-61415240.us-east-1.elb.amazonaws.com   80:31683/TCP   6s    app=demo-nginx
+kubernetes   ClusterIP      10.100.0.1      <none>                                                                  443/TCP        24m   <none>
+[root@ip-172-31-23-233 tmp]#
+
+
+
+
+
+Create 1st manifest file
+
+#vi pod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod
+  labels:
+    app: demo-app
+
+spec:
+  containers:
+    - name: demo-nginx
+      image: nginx
+      ports:
+        - name: demo-nginx
+          containerPort: 80
+
+
+
+
+
+Create a service manifest file
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-service
+
+spec:
+  ports:
+  - name: nginx-port
+    port: 80
+    targetPort: 80
+    
+  type: LoadBalancer
+
+
+
+
+[root@ip-172-31-23-233 ~]# kubectl apply -f pod.yml
+pod/demo-pod created
+[root@ip-172-31-23-233 ~]# kubectl get pall
+error: the server doesn't have a resource type "pall"
+[root@ip-172-31-23-233 ~]# kubectl get all
+NAME           READY   STATUS    RESTARTS   AGE
+pod/demo-pod   1/1     Running   0          9s
+pod/webapp     1/1     Running   0          31m
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.100.0.1   <none>        443/TCP   45m
+[root@ip-172-31-23-233 ~]# kubectl apply -f service.yml
+service/demo-service created
+[root@ip-172-31-23-233 ~]# kubectl get all
+NAME           READY   STATUS    RESTARTS   AGE
+pod/demo-pod   1/1     Running   0          31s
+pod/webapp     1/1     Running   0          31m
+
+NAME                   TYPE           CLUSTER-IP       EXTERNAL-IP                                                               PORT(S)        AGE
+service/demo-service   LoadBalancer   10.100.135.253   ab410fe44f1004de6886f630ada0f24a-1747022450.us-east-1.elb.amazonaws.com   80:30744/TCP   5s
+service/kubernetes     ClusterIP      10.100.0.1       <none>                                                                    443/TCP        46m
+[root@ip-172-31-23-233 ~]#
+
+
+
+
+Using labels and selector
+Using the steps above, you are still not able to access the page because the load balancer doesn't know how to forward it to the pod. 
+
+Update manifest files with labels and selectors
+
+[root@ip-172-31-23-233 ~]# cat service.yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-service
+
+spec:
+  ports:
+  - name: nginx-port
+    port: 80
+    targetPort: 80
+
+  selector:
+    app: demo-app
+  type: LoadBalancer
+[root@ip-172-31-23-233 ~]# kubectl apply -f pod.yml
+error: error parsing pod.yml: error converting YAML to JSON: yaml: line 5: mapping values are not allowed in this context
+[root@ip-172-31-23-233 ~]# vi pod.yml
+[root@ip-172-31-23-233 ~]# kubectl apply -f pod.yml
+pod/demo-pod configured
+[root@ip-172-31-23-233 ~]# kubectl describe service/demo-service
+Name:                     demo-service
+Namespace:                default
+Labels:                   <none>
+Annotations:              <none>
+Selector:                 <none>
+Type:                     LoadBalancer
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.100.135.253
+IPs:                      10.100.135.253
+LoadBalancer Ingress:     ab410fe44f1004de6886f630ada0f24a-1747022450.us-east-1.elb.amazonaws.com
+Port:                     nginx-port  80/TCP
+TargetPort:               80/TCP
+NodePort:                 nginx-port  30744/TCP
+Endpoints:                <none>
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:
+  Type    Reason                Age    From                Message
+  ----    ------                ----   ----                -------
+  Normal  EnsuringLoadBalancer  4m36s  service-controller  Ensuring load balancer
+  Normal  EnsuredLoadBalancer   4m32s  service-controller  Ensured load balancer
+
+[root@ip-172-31-23-233 ~]# kubectl get pod -o wide
+NAME       READY   STATUS    RESTARTS   AGE     IP               NODE                             NOMINATED NODE   READINESS GATES
+demo-pod   1/1     Running   0          5m18s   192.168.2.97     ip-192-168-3-148.ec2.internal    <none>           <none>
+webapp     1/1     Running   0          36m     192.168.62.255   ip-192-168-38-167.ec2.internal   <none>           <none>
+
+

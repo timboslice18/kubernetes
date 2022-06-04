@@ -1,0 +1,27 @@
+pod-definition.yml
+apiVersion: v1
+kind: Pod
+metedata:
+	name: worker-app-pod
+	labels:
+		name: worker-app-pod
+		app: demo-voting-app
+spec:
+	containers:
+		- name: data-processor
+		image: data-processor
+		ports:
+			- containerPort: 1234
+		resources:
+			requests:
+				memory: "1Gi"
+				cpu: 1
+		limits:
+			memory: "2Gi"
+			cpu: 2
+			
+			
+When you go above the cpu limit, kubernetes will not allow it ; but RAM will be allowed which will cause the pod to be terminated
+
+
+

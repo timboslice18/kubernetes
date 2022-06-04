@@ -1,0 +1,71 @@
+NodeSelector
+
+Allows you to tell where to place a pod. Very limited when compared to Node Affinity
+
+apiVersion: v1
+kind: Pod
+metedata:
+	name: worker-app-pod
+	labels:
+		name: worker-app-pod
+		app: demo-voting-app
+spec:
+	container:
+		- name: worker-app
+		image: kodekloud/examplevotingapp_worker:v1
+	nodeSelector:
+		size: Large
+		
+		
+This would tell the pod to be placed on a node with label "Large"
+
+To place label on a node:
+kubectl label nodes <node-name> <label-key>=<label-value>
+kubectl label nodes node-1 size-Large
+
+
+
+Node Affinity
+
+Ensure that pods are hosted on particular nodes
+
+pod-definition.yml
+apiVersion: v1
+kind: Pod
+metedata:
+	name: worker-app-pod
+	labels:
+		name: worker-app-pod
+		app: demo-voting-app
+spec:
+	containers:
+		- name: data-processor
+		image: data-processor
+	affinity:
+		nodeAffinity:
+			requiredDuringSchedulingIgnoredDuringExecution:
+				nodeSelectorTerms:
+					- matchExpressions:
+						- key: size
+						operator: In
+						values:
+							- Large
+						OTHER OPTIONS
+						- key: size
+						operator: NotIn
+						values:
+							- small
+				
+
+
+
+Node Affinity types:
+	Available:
+		requiredDuringSchedulingIgnoredDuringExecution
+			If it cannot find a pod with a label, then it will not be scheduled
+		preferredDuringSchedulingIgnoredDuringExecution
+	
+	Planned:
+		requiredDuringSchedulingRequiredDuringExecution
+		preferredDuringSchedulingRequiredDuringExecution
+

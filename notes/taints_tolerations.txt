@@ -1,0 +1,28 @@
+https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+This only tells the node whether to allow a pod or not. It does not tell a pod to be assigned to a node. 
+
+You place a taint on a node to prevent a node from being assigned to it
+
+	You then specify which pods are "tolerant" to be allowed to be placed on a tainted node
+	
+kubectl taint nodes node-name key=value:taint-effect
+
+
+apiVersion: v1
+kind: Pod
+metedata:
+	name: worker-app-pod
+	labels:
+		name: worker-app-pod
+		app: demo-voting-app
+spec:
+	container:
+		- name: worker-app
+		image: kodekloud/examplevotingapp_worker:v1
+	tolerations:
+		- key: app
+		operator: "Equal"
+		value: "blue"
+		effect: "NoSchedule"
+

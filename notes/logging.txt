@@ -1,0 +1,25 @@
+Monitor Cluster Components
+
+Tools:
+	Metrics Server
+		- 1 metrics server per kubernetes cluster.
+		- Retrieves metrics from each node and pod, aggregates them and stores them in memory. This means you don't get historical info and should rely on the tools listed below:
+		- Kubelet has a cAdvisor which is responsible for gathering and sending metrics from pod/nodes
+		- minikube addons enable metrics-server
+		- kubectl top node|pod ##see statistics
+	Prometheus
+	Elastic Stack
+	Data Dog
+	Dynatrace
+	
+
+
+Managing Application Logs
+
+
+#show logs of pod. -f option shows a live feed
+kubectl logs -f <pod_name> <container_name>
+
+
+
+
